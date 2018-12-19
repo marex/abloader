@@ -1,0 +1,27 @@
+/dts-v1/;
+
+/ {
+	description = "Update fitImage for ABloader";
+
+	images {
+		bootparam {
+			description = "Bootparam SA0";
+			data = /incbin/("bootparam.sa0");
+			type = "standalone";
+			os = "Bootparams SA0";
+			arch = "arm64";
+			compression = "none";
+			load = <0x8000000>;
+		};
+
+		bl2 {
+			description = "BL2";
+			data = /incbin/("jump.bin");
+			type = "standalone";
+			os = "bl2";
+			arch = "arm64";
+			compression = "none";
+			load = <0x8080000>;
+		};
+	};
+};
