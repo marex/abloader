@@ -13,6 +13,7 @@ The HF layout is as follows:
 0x1c0000 - A-copy ATF BL31 ( build/rcar/release/bl31.bin )
 0x200000 - A-copy OpTee OS ( out/arm-plat-rcar/core/tee-pager_v2.bin )
 0x640000 - A-copy U-Boot ( u-boot.bin )
+0x800000 - Flash writer ( AArch64_Flash_writer_SCIF_DUMMY_CERT_E6300400_salvator-x.bin )
 0x840000 - B-copy ATF BL2 ( build/rcar/release/bl2.bin )
 0x980000 - B-copy ATF SA6 ( tools/renesas/rcar_layout_create/cert_header_sa6.bin )
 0x9c0000 - B-copy ATF BL31 ( build/rcar/release/bl31.bin )
@@ -35,3 +36,6 @@ Boot A-copy
 
 Boot B-copy
 => i2c dev 7 && i2c mw 0x30 0x70 0xa5 && i2c mw 0x30 0x71 1 ; reset
+
+Boot flash-writer
+=> i2c dev 7 && i2c mw 0x30 0x70 0xa5 && i2c mw 0x30 0x71 3 ; reset

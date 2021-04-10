@@ -344,7 +344,7 @@ _start:
 samp:	riic_pmic_read_reg pmicreg=0x71	/* 0x70..0x79 are REG_KEEP1..10[7:0] */
 
 	/* Flip A-B boot bit 0x71[0] */
-flip:	bic	w2, w2, #0x7e	/* Filter out other bits than 0x71[7,0] */
+flip:	bic	w2, w2, #0x7c	/* Filter out other bits than 0x71[7,1,0] */
 	eor	w2, w2, #0x01
 
 	/* Update PMIC content to boot the other copy on next boot */
@@ -356,8 +356,12 @@ flip:	bic	w2, w2, #0x7e	/* Filter out other bits than 0x71[7,0] */
 	riic_stop
 	riic_done
 
+	tbz	w2, 1, 3f	/* if (0x71[1] == 1) then boot flash-writer */
+	ldr	x0, =0x08803c00	/* Technically SA0 B-copy, reuse for flash-writer */
+	b	4f
+
 	/* Flip A-B boot bit again and add it to MFISBTSTSR */
-	and	w2, w2, #0x01
+3:	and	w2, w2, #0x01
 	eor	w2, w2, #0x01
 	lsl	w2, w2, #4
 	ldr	x0, =MFISBTSTSR
@@ -369,17 +373,17 @@ flip:	bic	w2, w2, #0x7e	/* Filter out other bits than 0x71[7,0] */
 
 	ldr	x0, =0x08040000	/* ATF BL2 A-copy offset in RPC HF */
 
-	tbz	w2, 0, 3f	/* if (0x71[0] == 0) then boot A-copy */
+	tbz	w2, 0, 4f	/* if (0x71[0] == 0) then boot A-copy */
 	/* Add 8 MiB = 0x0080_0000 offset to boot B-copy */
 	orr	x0, x0, #0x00800000
 
-3:	ldr	x1, =0xe6304000	/* BL2 destination in SRAM */
+4:	ldr	x1, =0xe6304000	/* BL2 destination in SRAM */
 	ldr	x2, =0x0002c000	/* BL2 size */
 
-4:	ldr	x3, [x0], #8
+5:	ldr	x3, [x0], #8
 	str	x3, [x1], #8
 	sub	x2, x2, #8
-	cbnz	x2, 4b
+	cbnz	x2, 5b
 
 	/* BOOT NEXT STAGE  */
 	ldr	x1, =0xe6304000
