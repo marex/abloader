@@ -319,6 +319,20 @@
 mfisskip: nop
 .endm
 
+.macro load_copy_size
+	ldr	x2, =0x00014000	/* E3/D3 => 80 kiB BL2 */
+	ldr	x1, =PRR
+	ldr	w3, [x1]
+	lsr	w3, w3, #8
+	and	w3, w3, #0xff
+	cmp	w3, #0x57	/* E3 => 80 kiB BL2 */
+	b.eq	ise3d3
+	cmp	w3, #0x58	/* D3 => 80 kiB BL2 */
+	b.eq	ise3d3
+	ldr	x2, =0x0002c000	/* H3/M3-W/M3-W+/M3-N => 170 kiB BL2 */
+ise3d3: nop	/* E3 or D3 */
+.endm
+
 .text
 .global _start
 _start:
@@ -377,8 +391,8 @@ flip:	bic	w2, w2, #0x7c	/* Filter out other bits than 0x71[7,1,0] */
 	/* Add 8 MiB = 0x0080_0000 offset to boot B-copy */
 	orr	x0, x0, #0x00800000
 
-4:	ldr	x1, =0xe6304000	/* BL2 destination in SRAM */
-	ldr	x2, =0x0002c000	/* BL2 size */
+4:	load_copy_size		/* BL2 size */
+	ldr	x1, =0xe6304000	/* BL2 destination in SRAM */
 
 5:	ldr	x3, [x0], #8
 	str	x3, [x1], #8
