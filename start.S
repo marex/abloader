@@ -6,6 +6,7 @@
 #define CPG_SMSTPCR9_DVFS		0x04000000
 
 #define PRR				0xfff00044
+#define RST_MODEMR			0xe6160060
 #define MFISBTSTSR			0xe6260604
 #define MFISWPCNTR			0xe6260900
 
@@ -125,13 +126,61 @@
 	orr	w1, w1, #IIC_ICCR_ENABLE
 	strb	w1, [x0, IIC_ICCR]
 
-	/* FIXME: E3 and CHECK_MD13_MD14 */
+	ldr	x0, =PRR
+	ldr	w1, [x0]
+	lsr	w1, w1, #8
+	and	w1, w1, #0xff
+	ldr	x0, =IIC_BASE
+	cmp	w1, #0x57
+	b.eq	20f		/* E3 SoC */
 
+	ldr	x0, =RST_MODEMR
+	ldr	w1, [x0]
+	lsr	w1, w1, #13
+	and	w1, w1, #0x3	/* Extract MD13 and MD14 values */
+	ldr	x0, =IIC_BASE
+	cmp	w1, #0x0
+	b.eq	10f
+	cmp	w1, #0x1
+	b.eq	11f
+	cmp	w1, #0x2
+	b.eq	12f
+
+	/* MODE 3 */
+	ldr	w1, =IIC_ICCL_EXTAL_TYPE_3
+	strb	w1, [x0, IIC_ICCL]
+	ldr	w1, =IIC_ICCH_EXTAL_TYPE_3
+	strb	w1, [x0, IIC_ICCH]
+	b	21f
+
+10:
 	ldr	w1, =IIC_ICCL_EXTAL_TYPE_0
 	strb	w1, [x0, IIC_ICCL]
 	ldr	w1, =IIC_ICCH_EXTAL_TYPE_0
 	strb	w1, [x0, IIC_ICCH]
+	b	21f
 
+11:
+	ldr	w1, =IIC_ICCL_EXTAL_TYPE_1
+	strb	w1, [x0, IIC_ICCL]
+	ldr	w1, =IIC_ICCH_EXTAL_TYPE_1
+	strb	w1, [x0, IIC_ICCH]
+	b	21f
+
+12:
+	ldr	w1, =IIC_ICCL_EXTAL_TYPE_2
+	strb	w1, [x0, IIC_ICCL]
+	ldr	w1, =IIC_ICCH_EXTAL_TYPE_2
+	strb	w1, [x0, IIC_ICCH]
+	b	21f
+
+20:
+	ldr	w1, =IIC_ICCL_EXTAL_TYPE_E
+	strb	w1, [x0, IIC_ICCL]
+	ldr	w1, =IIC_ICCH_EXTAL_TYPE_E
+	strb	w1, [x0, IIC_ICCH]
+
+21:
 	ldrb	w1, [x0, IIC_ICIC]
 	orr	w1, w1, #(IIC_ICIC_TACKE | IIC_ICIC_WAITE | IIC_ICIC_DTEE)
 	strb	w1, [x0, IIC_ICIC]
